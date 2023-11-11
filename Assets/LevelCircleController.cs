@@ -4,14 +4,28 @@ using UnityEngine;
 
 public class LevelCircleController : MonoBehaviour {
   CircleRenderer _circleRenderer;
+  CircleRenderer circleRenderer {
+    get {
+      if (_circleRenderer == null) {
+        _circleRenderer = GetComponent<CircleRenderer> ();
+      }
+      return _circleRenderer;
+    }
+  }
+
   float _endAngle, _startAngle;
 
   LevelController _level;
 
   public void Init (LevelController levelController) {
-    _circleRenderer = GetComponent<CircleRenderer> ();
-    _startAngle = _circleRenderer.startAngle;
-    _endAngle = _circleRenderer.endAngle;
+    Debug.Log ("Init LevelCircleController");
+
+    if (levelController == null) {
+      Debug.LogError ("LevelController is null");
+    }
+
+    _startAngle = circleRenderer.startAngle;
+    _endAngle = circleRenderer.endAngle;
 
     _level = levelController;
     levelController.OnScoreChanged += UpdateScore;
@@ -22,7 +36,7 @@ public class LevelCircleController : MonoBehaviour {
   }
 
   void UpdateColor () {
-    _circleRenderer.SetColor (_level.currentPalette[2]);
+    circleRenderer.SetColor (_level.currentPalette[2]);
   }
 
   void UpdateScore (int score) {
@@ -31,11 +45,11 @@ public class LevelCircleController : MonoBehaviour {
     float angle = Mathf.Lerp (_startAngle, _endAngle, scorePercentage);
 
     if (scorePercentage < 0.001f) {
-      _circleRenderer.enabled = false;
-    } else if (_circleRenderer.enabled == false) {
-      _circleRenderer.enabled = true;
+      circleRenderer.enabled = false;
+    } else if (circleRenderer.enabled == false) {
+      circleRenderer.enabled = true;
     }
-    _circleRenderer.SetEndAngle (angle);
+    circleRenderer.SetEndAngle (angle);
   }
 
   void UpdateLevel (int level) {

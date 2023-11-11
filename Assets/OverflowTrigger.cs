@@ -8,41 +8,46 @@ public class OverflowTrigger : MonoBehaviour {
   Dictionary<int, Metaball> _metaballsMarkFofOverflow = new Dictionary<int, Metaball> ();
 
   public static UnityAction<bool> OnOverflowChanged = delegate { };
-  public float overflowDelay = 2f;
+  public float overflowDelay = 3f;
 
   bool _isOverFlowing = false;
 
-  // Coroutine that waits for a delay before checking if there are any
+  Coroutine _overflowCoroutine;
+
   IEnumerator OverflowCoroutine () {
     yield return new WaitForSeconds (overflowDelay);
 
     // If there are any metaballs that are marked for overflow, add them to the overflowing metaballs
     foreach (var metaball in _metaballsMarkFofOverflow.Values) {
-      _overflowingMetaballs[metaball.GetInstanceID ()] = metaball;
+      _overflowingMetaballs.Add (metaball.GetInstanceID (), metaball);
     }
 
     // Clear the list of metaballs that are marked for overflow
     _metaballsMarkFofOverflow.Clear ();
 
+    // Only call the event if the state has changed to overflowing
     bool newState = _overflowingMetaballs.Count > 0;
-    if (_isOverFlowing != newState) {
+    if (newState && _isOverFlowing != newState) {
       _isOverFlowing = newState;
       OnOverflowChanged (_isOverFlowing);
     }
+
+    Debug.Log ($"Has {_overflowingMetaballs.Count} overflowing metaballs");
+
+    _overflowCoroutine = null;
   }
 
   void OnTriggerEnter2D (Collider2D other) {
     var metaball = other.GetComponent<Metaball> ();
 
     if (metaball && !_metaballsMarkFofOverflow.ContainsKey (metaball.GetInstanceID ())) {
-      bool startCoroutine = _metaballsMarkFofOverflow.Count == 0;
 
       // Mark this metaball for overflow
       _metaballsMarkFofOverflow[metaball.GetInstanceID ()] = metaball;
 
       // If no metaballs are overflowing, start the overflow coroutine
-      if (startCoroutine) {
-        StartCoroutine (OverflowCoroutine ());
+      if (_overflowCoroutine == null && _metaballsMarkFofOverflow.Count > 0) {
+        _overflowCoroutine = StartCoroutine (OverflowCoroutine ());
       }
     }
   }
@@ -57,8 +62,15 @@ public class OverflowTrigger : MonoBehaviour {
         _overflowingMetaballs.Remove (id);
       }
 
-      if (_overflowingMetaballs.Count == 0) {
-        StopAllCoroutines ();
+      // Stop the coroutine only if there are no metaballs left that could cause an overflow
+      if (_overflowingMetaballs.Count == 0 && _metaballsMarkFofOverflow.Count == 0 && _overflowCoroutine != null) {
+        StopCoroutine (_overflowCoroutine);
+        _overflowCoroutine = null;
+
+        if (_isOverFlowing) {
+          _isOverFlowing = false;
+          OnOverflowChanged (_isOverFlowing);
+        }
       }
     }
   }

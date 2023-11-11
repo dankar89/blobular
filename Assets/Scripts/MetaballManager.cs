@@ -18,6 +18,8 @@ public class MetaballManager : MonoBehaviour {
 
   List<Metaball> metaballObstacles = new List<Metaball> ();
 
+  public LevelController level;
+
   void Start () {
     poolManager = GetComponentInChildren<MetaballPoolManager> ();
     currentSpawnDataIndex = 0;
@@ -66,7 +68,7 @@ public class MetaballManager : MonoBehaviour {
       metaballSpawnPoints[Random.Range (0, metaballSpawnPoints.Length)].position;
     MetaballColorType colorType = (MetaballColorType) Random.Range (0, 3);
 
-    Metaball metaball = poolManager.GetMetaball (position, colorType, value);
+    Metaball metaball = poolManager.GetMetaball (position, colorType, value, level.popThreshold);
     metaball.onStateChanged += OnMetaballStateChanged;
     metaball.onRelease += OnMetaballRelease;
 

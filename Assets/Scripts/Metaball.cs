@@ -29,7 +29,6 @@ public struct MetaballTimedStateChange {
 
 public class Metaball : MonoBehaviour {
   public static float SCALE_MODIFIER = 0.42f;
-  public static int POP_VALUE = 75;
 
   public int id;
 
@@ -37,6 +36,7 @@ public class Metaball : MonoBehaviour {
   public MetaballColorType colorType;
   // value will be between 1 and 100
   public int value;
+  int _popThreshold;
 
   public bool isHighlighted = false;
   public bool isAbsorbing = false;
@@ -108,7 +108,7 @@ public class Metaball : MonoBehaviour {
     }
   }
 
-  public void Init (Vector3 startPosition, MetaballColorType color, int value, UnityAction<Metaball> onRelease) {
+  public void Init (Vector3 startPosition, MetaballColorType color, int value, int popThreshold, UnityAction<Metaball> onRelease) {
     this.id = GetInstanceID ();
     transform.position = startPosition;
     this.colorType = color;
@@ -118,6 +118,7 @@ public class Metaball : MonoBehaviour {
     this.value = value;
     this.onRelease = onRelease;
     state = MetaballState.Normal;
+    _popThreshold = popThreshold;
 
     _canvas.gameObject.SetActive (false);
 
@@ -403,7 +404,7 @@ public class Metaball : MonoBehaviour {
       Debug.LogError ($"onAbsorbComplete is null for {name}");
     }
 
-    if (value >= POP_VALUE) {
+    if (value >= _popThreshold) {
       Pop ();
     } else {
       onAbsorbComplete?.Invoke (this, amountAbsorbed);

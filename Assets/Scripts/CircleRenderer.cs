@@ -8,34 +8,48 @@ public class CircleRenderer : MonoBehaviour {
   public float startAngle = 0f; // In degrees
   public float endAngle = 360f; // In degrees
   LineRenderer _lineRenderer;
+  LineRenderer lineRenderer {
+    get {
+      if (_lineRenderer == null) {
+        _lineRenderer = GetComponent<LineRenderer> ();
+      }
+      return _lineRenderer;
+    }
+  }
 
   Material _material;
+  Material material {
+    get {
+      if (_material == null) {
+        _material = GetComponent<Renderer> ().material;
+      }
+      return _material;
+    }
+  }
 
   public bool reRender = false;
 
   Coroutine _animateEndAngleCoroutine;
 
   void Awake () {
-    _lineRenderer = GetComponent<LineRenderer> ();
-    _material = GetComponent<Renderer> ().material;
     RenderCircle ();
   }
 
   void OnEnable () {
-    _lineRenderer.enabled = true;
+    lineRenderer.enabled = true;
   }
 
   void OnDisable () {
-    _lineRenderer.enabled = false;
+    lineRenderer.enabled = false;
   }
 
   public void SetColor (Color color) {
-    _material.color = color;
+    material.color = color;
   }
 
   void RenderCircle () {
-    _lineRenderer.positionCount = segments + 1;
-    _lineRenderer.useWorldSpace = false;
+    lineRenderer.positionCount = segments + 1;
+    lineRenderer.useWorldSpace = false;
 
     float deltaAngle = (endAngle - startAngle) / segments;
     float angle = startAngle;
@@ -43,7 +57,7 @@ public class CircleRenderer : MonoBehaviour {
     for (int i = 0; i <= segments; i++) {
       float x = -Mathf.Cos (angle * Mathf.Deg2Rad) * radius;
       float y = Mathf.Sin (angle * Mathf.Deg2Rad) * radius;
-      _lineRenderer.SetPosition (i, new Vector3 (x, y, 0));
+      lineRenderer.SetPosition (i, new Vector3 (x, y, 0));
 
       angle += deltaAngle;
     }
@@ -76,11 +90,13 @@ public class CircleRenderer : MonoBehaviour {
     }
   }
 
+#if UNITY_EDITOR
   void Update () {
-    if (_lineRenderer == null) return;
+    if (lineRenderer == null) return;
     if (reRender) {
       RenderCircle ();
       reRender = false;
     }
   }
+#endif
 }

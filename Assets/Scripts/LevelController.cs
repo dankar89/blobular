@@ -7,42 +7,115 @@ using UnityEngine.InputSystem;
 public class LevelController : MonoBehaviour {
 
   public static int NEXT_LEVEL_THRESHOLD = 125;
+  public static int MAX_POP_THRESHOLD = 75;
+  public static int START_POP_THRESHOLD = 40;
+  public static int POP_THRESHOLD_INCREMENT = 5;
   public Metaball highlightedMetaball;
   public Transform metaballParent;
 
   public MeshRenderer quadRenderer;
   Material _quadMetaballMaterial;
 
+  CircleRenderer _circleRenderer, _overflowCircleRenderer;
+
   public List<Texture2D> colorPalettes = new List<Texture2D> ();
   public Color[] currentPalette;
+  public Color overflowColor = Color.red;
   public UnityAction<int> OnScoreChanged = delegate { };
   public UnityAction<int> OnLevelChanged = delegate { };
 
   public int score = 0;
   public int level = 1;
-  public int life = 5;
+
+  public int startLife = 5;
+  float life = 5;
+  public float overflowLifePenaltyPerSecond = 0.5f;
+  public float lifeRecoveredPerSecond = 0.5f;
+  float _circleStartAngle, _circleEndAngle;
+
+  public int popThreshold = START_POP_THRESHOLD;
 
   Vector2 movement;
   LevelUIController _levelUI;
 
-  Coroutine _rotateCoroutine;
+  Coroutine _rotateCoroutine, _lifeTimerCoroutine;
 
   void Awake () {
+    Debug.Log ("LevelController Awake");
     _quadMetaballMaterial = quadRenderer.material;
     UpdateColors ();
+
+    life = startLife;
 
     _levelUI = GetComponentInChildren<LevelUIController> ();
     _levelUI.Init (this);
 
-    OverflowTrigger.OnOverflowChanged += (overflow) => {
-      Debug.LogError ($"OVERFLOW: {overflow}");
-    };
+    _circleRenderer = transform.Find ("LevelCircle").GetComponent<CircleRenderer> ();
+    _circleStartAngle = _circleRenderer.startAngle;
+    _circleEndAngle = _circleRenderer.endAngle;
+    _overflowCircleRenderer = _circleRenderer.transform.Find ("OverflowCircle").GetComponent<CircleRenderer> ();
+    _overflowCircleRenderer.SetEndAngle (_circleStartAngle);
+    _overflowCircleRenderer.enabled = false;
+    OverflowTrigger.OnOverflowChanged += OnOverflowChanged;
+  }
+
+  void GameOver () {
+    Debug.Log ("Game Over");
+    GameManager.GetInstance ().Pause ();
+    _levelUI.ShowGameOver ();
+  }
+
+  IEnumerator LifeTimer (float fromAngle, float toAngle, float speed, int direction) {
+    _overflowCircleRenderer.SetColor (overflowColor);
+    _overflowCircleRenderer.enabled = true;
+    while (enabled) {
+      life = life + (speed * Time.deltaTime * direction);
+
+      // Update the endAngle of the overflow circle to match the percentage of life lost
+      float percentage = life > 0 ? 1f - (life / (float) startLife) : 0;
+      Debug.Log ($"Overflow percentage: {percentage} life: {life}");
+
+      float angle = Mathf.Lerp (fromAngle, toAngle, percentage);
+      _overflowCircleRenderer.SetEndAngle (angle);
+
+      if (direction < 0 && life < 0) {
+        life = 0;
+        break;
+      }
+
+      if (direction > 0 && life > startLife) {
+        life = startLife;
+        break;
+      }
+      yield return null;
+    }
+
+    if (life <= 0) {
+      GameOver ();
+    }
+    _overflowCircleRenderer.enabled = false;
+    _lifeTimerCoroutine = null;
+  }
+
+  void OnOverflowChanged (bool overflow) {
+    if (_lifeTimerCoroutine != null) {
+      StopCoroutine (_lifeTimerCoroutine);
+      _lifeTimerCoroutine = null;
+      _overflowCircleRenderer.enabled = false;
+    }
+
+    if (overflow) {
+      _lifeTimerCoroutine = StartCoroutine (LifeTimer (_circleStartAngle, _circleEndAngle, overflowLifePenaltyPerSecond, -1));
+    } else {
+      if (life < startLife) {
+        _lifeTimerCoroutine = StartCoroutine (LifeTimer (_circleStartAngle, _circleEndAngle, lifeRecoveredPerSecond, 1));
+      }
+    }
   }
 
   void OnAbsorbComplete (Metaball metaball, int amountAbsorbed) {
     highlightedMetaball?.ClearHighlight ();
     highlightedMetaball = null;
-    // MetaballManager.ResumeSpawn ();
     Debug.Log ("Absorbed " + amountAbsorbed);
     UpdateScore (amountAbsorbed);
   }
@@ -68,6 +141,9 @@ public class LevelController : MonoBehaviour {
 
   void NextLevel () {
     level++;
+    if (popThreshold < MAX_POP_THRESHOLD) {
+      popThreshold = Mathf.Min (popThreshold + POP_THRESHOLD_INCREMENT, MAX_POP_THRESHOLD);
+    }
     UpdateColors ();
     OnLevelChanged (level);
   }
@@ -116,9 +192,7 @@ public class LevelController : MonoBehaviour {
     }
   }
 
-  public void OnPoint (InputAction.CallbackContext ctx) {
-    // RaycastForMetaball ();
-  }
+  public void OnPoint (InputAction.CallbackContext ctx) { }
 
   IEnumerator RotateAsync () {
     float speed = 0;
@@ -183,14 +257,5 @@ public class LevelController : MonoBehaviour {
     if (Time.frameCount % 4 == 0) {
       RaycastForMetaball ();
     }
-
-    // use the normalized movement direction to rotate the metaball parent 
-    // if (movement != Vector2.zero) {
-    //   // Rotate around the z axis
-    //   // Accelerate until max speed
-
-    //   float z = metaballParent.localEulerAngles.z + (movement.x * Time.deltaTime * 100f);
-    //   metaballParent.rotation = Quaternion.Euler (0, 0, z);
-    // }
   }
 }

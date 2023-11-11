@@ -43,10 +43,10 @@ public class MetaballPoolManager : MonoBehaviour {
     Pool.Release (metaball);
   }
 
-  public Metaball GetMetaball (Vector3 startPosition, MetaballColorType color, int value, bool setParentOnCollision = true) {
+  public Metaball GetMetaball (Vector3 startPosition, MetaballColorType color, int value, int popThreshold, bool setParentOnCollision = true) {
     Metaball metaball = Pool.Get ();
     metaball.SetParentOnCollision (metaballParent, transform);
-    metaball.Init (startPosition, color, value, ReleaseMetaball);
+    metaball.Init (startPosition, color, value, popThreshold, ReleaseMetaball);
     return metaball;
   }
 }

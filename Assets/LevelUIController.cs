@@ -29,6 +29,10 @@ public class LevelUIController : MonoBehaviour {
     levelController.OnScoreChanged += UpdateScore;
   }
 
+  public void ShowGameOver() {
+    // TODO
+  }
+
   IEnumerator UpdateScoreAsync () {
     float speed = Mathf.Abs (targetScore - currentScore) * Time.deltaTime * scoreUpdateSpeed;
     // Move current score towards target. The further away the target is, the faster we move.
