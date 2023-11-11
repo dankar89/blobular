@@ -6153,7 +6153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playButton: {fileID: 812476615}
-  quitButton: {fileID: 0}
+  quitButton: {fileID: 336935006}
   quadRenderer: {fileID: 1950493606}
   colorPalettes:
   - {fileID: 2800000, guid: d6634393944521644bdf007d762db49f, type: 3}
