@@ -7,7 +7,6 @@ using UnityEngine.UI;
 
 public class MenuButton : MonoBehaviour, ISelectHandler, IDeselectHandler, IPointerEnterHandler, IPointerExitHandler {
 
-  public Material textMaterialSelected, textMaterialNormal;
   ParticleSystem _particles;
   TextMeshProUGUI _text;
   Button _button;
@@ -18,7 +17,6 @@ public class MenuButton : MonoBehaviour, ISelectHandler, IDeselectHandler, IPoin
     _particles = GetComponentInChildren<ParticleSystem> ();
     _particles.Stop ();
     _text = GetComponentInChildren<TextMeshProUGUI> ();
-    _text.fontMaterial = textMaterialNormal;
 
     _selected = EventSystem.current.currentSelectedGameObject == gameObject;
     if (_selected) {
@@ -32,14 +30,12 @@ public class MenuButton : MonoBehaviour, ISelectHandler, IDeselectHandler, IPoin
     if (_selected) return;
     _selected = true;
     _particles.Play ();
-    _text.fontMaterial = textMaterialSelected;
   }
 
   void HideSelected () {
     if (!_selected) return;
     _selected = false;
     _particles.Stop ();
-    _text.fontMaterial = textMaterialNormal;
   }
 
   public void OnSelect (BaseEventData eventData) {

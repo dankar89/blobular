@@ -135,7 +135,7 @@ public class Metaball : MonoBehaviour {
     circleCollider.enabled = false;
     circleTrigger.enabled = false;
     isAbsorbing = false;
-    onRelease (this);
+    onRelease?.Invoke (this);
     onRelease = null;
     onHighlight = null;
     onClearHighlight = null;
@@ -164,12 +164,8 @@ public class Metaball : MonoBehaviour {
         break;
       case MetaballState.Obstacle:
         ClearHighlight ();
-        gameObject.layer = MetaballManager.OBSTACLE_LAYER;
-        Debug.Log ($"Setting {name} to gameObject.layer {LayerMask.LayerToName (gameObject.layer)} obstacle layer: {LayerMask.LayerToName (MetaballManager.OBSTACLE_LAYER)}");
+
         material.color = Color.white;
-        // rb.isKinematic = true;
-        // rb.velocity = Vector2.zero;
-        // rb.gravityScale = 0;
         transform.SetParent (_parentWhenFalling);
 
         // Set all connected metaballs to obstacle as well
@@ -313,9 +309,7 @@ public class Metaball : MonoBehaviour {
     onClearHighlight?.Invoke (this);
     isHighlighted = false;
 
-    if (state != MetaballState.Obstacle) {
-      gameObject.layer = MetaballManager.NORMAL_LAYER;
-    }
+    gameObject.layer = MetaballManager.NORMAL_LAYER;
 
     // Clear highlight on connected metaballs
     if (clearConnected) {

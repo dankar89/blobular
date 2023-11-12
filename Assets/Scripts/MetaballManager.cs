@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MetaballManager : MonoBehaviour {
 
-  public static LayerMask NORMAL_LAYER, OBSTACLE_LAYER, HIGHLIGHT_LAYER;
+  public static LayerMask NORMAL_LAYER, HIGHLIGHT_LAYER;
 
   MetaballPoolManager poolManager;
 
@@ -26,7 +26,6 @@ public class MetaballManager : MonoBehaviour {
     currentSpawnData = spawnData.spawnDataList[currentSpawnDataIndex];
 
     NORMAL_LAYER = LayerMask.NameToLayer ("Metaballs");
-    OBSTACLE_LAYER = LayerMask.NameToLayer ("MetaballsObstacle");
     HIGHLIGHT_LAYER = LayerMask.NameToLayer ("MetaballsHighlight");
 
     StartSpawning (currentSpawnData);

@@ -55,7 +55,7 @@ public class LevelController : MonoBehaviour {
     _circleEndAngle = _circleRenderer.endAngle;
     _overflowCircleRenderer = _circleRenderer.transform.Find ("OverflowCircle").GetComponent<CircleRenderer> ();
     _overflowCircleRenderer.SetEndAngle (_circleStartAngle);
-    _overflowCircleRenderer.enabled = false;
+    _overflowCircleRenderer.Hide ();
     OverflowTrigger.OnOverflowChanged += OnOverflowChanged;
   }
 
@@ -67,7 +67,7 @@ public class LevelController : MonoBehaviour {
 
   IEnumerator LifeTimer (float fromAngle, float toAngle, float speed, int direction) {
     _overflowCircleRenderer.SetColor (overflowColor);
-    _overflowCircleRenderer.enabled = true;
+    _overflowCircleRenderer.Show ();
     while (enabled) {
       life = life + (speed * Time.deltaTime * direction);
 
@@ -93,7 +93,7 @@ public class LevelController : MonoBehaviour {
     if (life <= 0) {
       GameOver ();
     }
-    _overflowCircleRenderer.enabled = false;
+    _overflowCircleRenderer.Hide ();
     _lifeTimerCoroutine = null;
   }
 
@@ -101,7 +101,7 @@ public class LevelController : MonoBehaviour {
     if (_lifeTimerCoroutine != null) {
       StopCoroutine (_lifeTimerCoroutine);
       _lifeTimerCoroutine = null;
-      _overflowCircleRenderer.enabled = false;
+      _overflowCircleRenderer.Hide ();
     }
 
     if (overflow) {

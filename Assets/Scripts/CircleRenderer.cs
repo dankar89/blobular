@@ -35,11 +35,15 @@ public class CircleRenderer : MonoBehaviour {
     RenderCircle ();
   }
 
-  void OnEnable () {
+  public bool IsVisible () {
+    return lineRenderer.enabled;
+  }
+
+  public void Show () {
     lineRenderer.enabled = true;
   }
 
-  void OnDisable () {
+  public void Hide () {
     lineRenderer.enabled = false;
   }
 

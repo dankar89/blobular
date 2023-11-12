@@ -45,9 +45,9 @@ public class LevelCircleController : MonoBehaviour {
     float angle = Mathf.Lerp (_startAngle, _endAngle, scorePercentage);
 
     if (scorePercentage < 0.001f) {
-      circleRenderer.enabled = false;
-    } else if (circleRenderer.enabled == false) {
-      circleRenderer.enabled = true;
+      circleRenderer.Hide ();
+    } else if (!circleRenderer.IsVisible ()) {
+      circleRenderer.Show ();
     }
     circleRenderer.SetEndAngle (angle);
   }
