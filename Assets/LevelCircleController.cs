@@ -49,7 +49,7 @@ public class LevelCircleController : MonoBehaviour {
     } else if (!circleRenderer.IsVisible ()) {
       circleRenderer.Show ();
     }
-    circleRenderer.SetEndAngle (angle);
+    circleRenderer.SetEndAngle (angle, .5f);
   }
 
   void UpdateLevel (int level) {

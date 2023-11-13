@@ -26,6 +26,11 @@ public class GameManager : Singleton {
     LoadScene ("SampleScene");
   }
 
+  public void LoadStart() {
+    Resume();
+    LoadScene ("Start");
+  }
+
   // void LoadLevel () {
   //     Time.timeScale = 1;
   //     StartCoroutine (LoadLevelAsync (levelName, levelRound));

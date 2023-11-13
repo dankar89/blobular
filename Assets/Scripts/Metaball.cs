@@ -433,14 +433,19 @@ public class Metaball : MonoBehaviour {
     return largest;
   }
 
-  void Pop () {
+  public void Pop () {
     // instantiate absorb particles
     var particles = Instantiate (absorbParticles, transform.position, Quaternion.identity);
     particles.GetComponent<ParticleSystemRenderer> ().material.color = color;
     particles.Play ();
-    onPopped?.Invoke (value);
+
+    var isObstacle = state == MetaballState.Obstacle;
+    onPopped?.Invoke (isObstacle ? 0 : value);
     onPopped = null;
-    SoundManager.PlaySfx ("harp", .5f, 1.5f);
+
+    if (!isObstacle) {
+      SoundManager.PlaySfx ("harp", .5f, 1.5f);
+    }
     Release ();
   }
 

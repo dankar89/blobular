@@ -20,6 +20,12 @@ public class MetaballManager : MonoBehaviour {
 
   public LevelController level;
 
+  public static MetaballManager instance;
+
+  void Awake () {
+    instance = this;
+  }
+
   void Start () {
     poolManager = GetComponentInChildren<MetaballPoolManager> ();
     currentSpawnDataIndex = 0;
@@ -32,7 +38,7 @@ public class MetaballManager : MonoBehaviour {
   }
 
   void OnMetaballStateChanged (Metaball metaball, MetaballTimedStateChange timedStateChange) {
-    if (timedStateChange.newState == MetaballState.Obstacle) {
+    if (metaball.state == MetaballState.Obstacle) {
       metaballObstacles.Add (metaball);
     }
   }
@@ -72,9 +78,14 @@ public class MetaballManager : MonoBehaviour {
     metaball.onRelease += OnMetaballRelease;
 
     if (currentSpawnData.timedObstacleChance > 0 && Random.value < currentSpawnData.timedObstacleChance) {
+      int maxTimer = 15;
+      // reduce the min timer by 1 every 5 levels
+      int minTimer = Mathf.Max (7, maxTimer - (level.level / 5));
+      int timer = Random.Range (minTimer, maxTimer);
+
       MetaballTimedStateChange stateChange = new MetaballTimedStateChange () {
         newState = MetaballState.Obstacle,
-        timer = 15
+        timer = timer
       };
       metaball.SetTimedStateChange (stateChange);
     }
@@ -119,6 +130,14 @@ public class MetaballManager : MonoBehaviour {
 
   public static void ResumeSpawn () {
     isPaused = false;
+  }
+
+  public void ClearObstacles () {
+    Debug.Log ($"Clearing obstacles: {metaballObstacles.Count}");
+    foreach (var metaball in new List<Metaball> (metaballObstacles)) {
+      metaball.Pop ();
+    }
+    metaballObstacles.Clear ();
   }
 
   private void OnDestroy () {

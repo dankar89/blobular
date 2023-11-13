@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LevelUIController : MonoBehaviour {
 
-  TextMeshProUGUI _scoreText;
+  TextMeshProUGUI _scoreText, _levelText;
   int targetScore = 0;
   float currentScore = 0;
 
@@ -15,6 +16,11 @@ public class LevelUIController : MonoBehaviour {
 
   public LevelCircleController levelProgress;
 
+  LevelController _level;
+
+  public GameObject gameOverScreen;
+  Button _restartButton, _backButton;
+
   // Start is called before the first frame update
   void Awake () {
 
@@ -22,15 +28,36 @@ public class LevelUIController : MonoBehaviour {
 
   public void Init (LevelController levelController) {
     Debug.Log ("Init LevelUIController");
+    _level = levelController;
     levelProgress.Init (levelController);
     _scoreText = transform.Find ("ScoreText").GetComponent<TextMeshProUGUI> ();
     _scoreText.text = "0";
 
+    _levelText = transform.Find ("LevelText").GetComponent<TextMeshProUGUI> ();
+    UpdateLevel (1);
+
     levelController.OnScoreChanged += UpdateScore;
+    levelController.OnLevelChanged += UpdateLevel;
+
+    _restartButton = gameOverScreen.transform.Find ("Buttons/RestartButton").GetComponent<Button> ();
+    _restartButton.onClick.AddListener (() => {
+      GameManager.GetInstance ().LoadGame ();
+    });
+
+    _backButton = gameOverScreen.transform.Find ("Buttons/BackButton").GetComponent<Button> ();
+    _backButton.onClick.AddListener (() => {
+      GameManager.GetInstance ().LoadStart ();
+    });
+    gameOverScreen.SetActive (false);
   }
 
-  public void ShowGameOver() {
-    // TODO
+  public void ShowGameOver () {
+    gameOverScreen.SetActive (true);
+  }
+
+  void UpdateLevel (int newLevel) {
+    _levelText.text = "Level " + newLevel.ToString ();
+    _levelText.color = _level.currentPalette[1];
   }
 
   IEnumerator UpdateScoreAsync () {

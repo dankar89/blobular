@@ -141,9 +141,16 @@ public class LevelController : MonoBehaviour {
 
   void NextLevel () {
     level++;
+    Debug.Log($"############ Next level {level}");
     if (popThreshold < MAX_POP_THRESHOLD) {
       popThreshold = Mathf.Min (popThreshold + POP_THRESHOLD_INCREMENT, MAX_POP_THRESHOLD);
     }
+
+    MetaballManager.instance.ClearObstacles();
+
+    // Play level up sound
+    SoundManager.PlaySfx ("level_up", .5f);
+
     UpdateColors ();
     OnLevelChanged (level);
   }
