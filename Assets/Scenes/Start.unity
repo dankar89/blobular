@@ -17569,22 +17569,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3053192224046071024, guid: 7982970f9311b4b469ae53439d4cc6dc, type: 3}
-      propertyPath: m_CullingMask.m_Bits
-      value: 2688
-      objectReference: {fileID: 0}
-    - target: {fileID: 6087418161701214242, guid: 7982970f9311b4b469ae53439d4cc6dc, type: 3}
-      propertyPath: m_BackGroundColor.b
-      value: 0.103773594
-      objectReference: {fileID: 0}
-    - target: {fileID: 6087418161701214242, guid: 7982970f9311b4b469ae53439d4cc6dc, type: 3}
-      propertyPath: m_BackGroundColor.g
-      value: 0.09055714
-      objectReference: {fileID: 0}
-    - target: {fileID: 6087418161701214242, guid: 7982970f9311b4b469ae53439d4cc6dc, type: 3}
-      propertyPath: m_BackGroundColor.r
-      value: 0.09270039
-      objectReference: {fileID: 0}
     - target: {fileID: 7626938886915300677, guid: 7982970f9311b4b469ae53439d4cc6dc, type: 3}
       propertyPath: m_Name
       value: Cameras
