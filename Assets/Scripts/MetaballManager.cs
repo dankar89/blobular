@@ -88,6 +88,8 @@ public class MetaballManager : MonoBehaviour {
         timer = timer
       };
       metaball.SetTimedStateChange (stateChange);
+    } else {
+      metaball.SetPersonality (GameManager.GetInstance ().personality);
     }
     return metaball;
   }

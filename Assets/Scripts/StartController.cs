@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class StartController : MonoBehaviour {
   public Button playButton, quitButton;
+  public Toggle personalityToggle;
 
   public Renderer quadRenderer;
 
@@ -17,6 +18,13 @@ public class StartController : MonoBehaviour {
 
     quitButton.onClick.AddListener (() => {
       Application.Quit ();
+    });
+
+    bool savedPersonality = PlayerPrefs.GetInt ("personality", 0) == 1;
+    personalityToggle.isOn = savedPersonality;
+    personalityToggle.onValueChanged.AddListener ((bool value) => {
+      GameManager.GetInstance ().personality = value;
+      PlayerPrefs.SetInt ("personality", value ? 1 : 0);
     });
 
     UpdateColors ();

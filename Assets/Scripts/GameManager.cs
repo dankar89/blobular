@@ -5,11 +5,14 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : Singleton {
 
+  public bool personality = false;
+
   protected override void OnAwake () {
     base.OnAwake ();
   }
 
   void Start () {
+    personality = PlayerPrefs.GetInt ("personality", 0) == 1;
     SoundManager.PlaySong ("Song1", .5f);
   }
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,7 +29,7 @@ public struct MetaballTimedStateChange {
 }
 
 public class Metaball : MonoBehaviour {
-  public static float SCALE_MODIFIER = 0.42f;
+  public static float SCALE_MODIFIER = 0.43f;
 
   public int id;
 
@@ -40,6 +41,8 @@ public class Metaball : MonoBehaviour {
 
   public bool isHighlighted = false;
   public bool isAbsorbing = false;
+
+  public Sprite face_1, face_2, face_3, face_4;
 
   Material material;
 
@@ -53,6 +56,8 @@ public class Metaball : MonoBehaviour {
   public UnityAction<int> onPopped;
   public UnityAction onConnectedChanged;
 
+  Color _initialTextColor;
+
   MetaballTimedStateChange _timedStateChange;
 
   Rigidbody2D rb;
@@ -61,15 +66,24 @@ public class Metaball : MonoBehaviour {
   Canvas _canvas;
   TextMeshProUGUI _textMesh;
 
-  Coroutine _highlightCoroutine, _absorbCoroutine;
+  Coroutine _highlightCoroutine,
+  _absorbCoroutine,
+  _faceLookAtCoroutine,
+  _timeStateChangeCoroutine;
 
   Transform _parentWhenColliding, _parentWhenFalling;
+
+  Metaball _faceLookAtTarget;
+
+  SpriteRenderer _faceSprite;
 
   public MetaballState state;
 
   public Dictionary<int, Metaball> connectedMetaballs = new Dictionary<int, Metaball> ();
 
   bool _hasFirstContact = false;
+
+  float _magnitude = 0;
 
   void Awake () {
     rb = GetComponent<Rigidbody2D> ();
@@ -82,8 +96,15 @@ public class Metaball : MonoBehaviour {
     }
     material = GetComponent<Renderer> ().material;
 
+    _faceSprite = transform.Find ("FaceSprite").GetComponent<SpriteRenderer> ();
+
     _canvas = GetComponentInChildren<Canvas> ();
     _textMesh = _canvas.GetComponentInChildren<TextMeshProUGUI> ();
+    _initialTextColor = _textMesh.color;
+  }
+
+  public bool HasActiveTimedState () {
+    return _timedStateChange.timer > 0 && _timeStateChangeCoroutine != null;
   }
 
   public Vector2 Position {
@@ -92,6 +113,18 @@ public class Metaball : MonoBehaviour {
     }
     set {
       rb.position = value;
+    }
+  }
+
+  void StopCoroutines () {
+    StopAllCoroutines ();
+    _highlightCoroutine = null;
+    _absorbCoroutine = null;
+    _faceLookAtCoroutine = null;
+    _timeStateChangeCoroutine = null;
+
+    if (_faceSprite) {
+      _faceSprite.sprite = face_1;
     }
   }
 
@@ -120,9 +153,13 @@ public class Metaball : MonoBehaviour {
     state = MetaballState.Normal;
     _popThreshold = popThreshold;
 
+    _faceSprite.gameObject.SetActive (false);
+
     _canvas.gameObject.SetActive (false);
 
     this.transform.localScale = SCALE_MODIFIER * Vector3.one * Mathf.Sqrt (value);
+    _magnitude = transform.localScale.magnitude;
+
     gameObject.layer = MetaballManager.NORMAL_LAYER;
     circleCollider.enabled = true;
     circleTrigger.enabled = true;
@@ -131,27 +168,33 @@ public class Metaball : MonoBehaviour {
     _timedStateChange = new MetaballTimedStateChange { timer = 0, newState = MetaballState.Normal, action = MetaballStateChangeAction.None };
   }
 
+  void ClearListeners () {
+    onRelease = null;
+    onHighlight = null;
+    onClearHighlight = null;
+    onAbsorbComplete = null;
+    onStateChanged = null;
+    onPopped = null;
+    onConnectedChanged = null;
+  }
+
   public void Release () {
     circleCollider.enabled = false;
     circleTrigger.enabled = false;
     isAbsorbing = false;
     onRelease?.Invoke (this);
-    onRelease = null;
-    onHighlight = null;
-    onClearHighlight = null;
-    onConnectedChanged = null;
-    onAbsorbComplete = null;
-    onStateChanged = null;
-    onPopped = null;
-    _highlightCoroutine = null;
-    _absorbCoroutine = null;
+    ClearListeners ();
     _parentWhenColliding = null;
     _parentWhenFalling = null;
-    StopAllCoroutines ();
+    StopCoroutines ();
 
     ClearHighlight (true);
     isHighlighted = false;
     _hasFirstContact = false;
+
+    _faceSprite.transform.localPosition = Vector3.zero;
+    _faceSprite.sprite = face_1;
+    _faceLookAtTarget = null;
 
     connectedMetaballs.Clear ();
   }
@@ -176,6 +219,18 @@ public class Metaball : MonoBehaviour {
           }
         }
         connectedMetaballs.Clear ();
+
+        if (_faceSprite) {
+          _faceSprite.transform.localPosition = Vector3.zero;
+          _faceSprite.sprite = face_4;
+          if (_faceLookAtCoroutine != null) {
+            StopCoroutine (_faceLookAtCoroutine);
+            _faceLookAtCoroutine = null;
+            _faceLookAtTarget = null;
+          }
+        }
+
+        _canvas.gameObject.SetActive (false);
         break;
       case MetaballState.PowerUp:
         // Just remove metaball on timeout?
@@ -192,7 +247,8 @@ public class Metaball : MonoBehaviour {
     MetaballStateChangeAction action = _timedStateChange.action;
 
     _canvas.gameObject.SetActive (true);
-    _textMesh.enabled = true;
+    // _textMesh.enabled = true;
+    _textMesh.color = _initialTextColor;
     _textMesh.text = $"{Mathf.RoundToInt (timer)}";
 
     yield return new WaitUntil (() => _hasFirstContact);
@@ -207,27 +263,36 @@ public class Metaball : MonoBehaviour {
 
       if (timer <= flashThreshold) {
         // Flash text if close to 0
-        _textMesh.enabled = Mathf.RoundToInt (timer * (timeFlashMultiplier + (flashThreshold - timer))) % 2 == 0;
+        bool makeWhite = Mathf.RoundToInt (timer * (timeFlashMultiplier + (flashThreshold - timer))) % 2 == 0;
+        _textMesh.color = makeWhite ? Color.white : _initialTextColor;
       }
 
       yield return null;
     }
 
     if (state != newState) {
-      _textMesh.enabled = true;
+      // _textMesh.enabled = true;
+      _textMesh.color = _initialTextColor;
       // Show the time as 0 for a few frames before changing the state
       _textMesh.text = $"0";
       yield return new WaitForSeconds (0.25f);
       _canvas.gameObject.SetActive (false);
 
-      // switch (action) {
-      //   case MetaballStateChangeAction.RemoveObstacles:
-      //     break;
-      // }
       yield return new WaitForEndOfFrame ();
       SetState (newState, true);
     }
     Debug.Log ($"Timed state change complete for {name}. new Layer: {LayerMask.LayerToName (gameObject.layer)}");
+
+    // Clean up
+    _timedStateChange = new MetaballTimedStateChange ();
+    _timeStateChangeCoroutine = null;
+  }
+
+  public void SetPersonality (bool personality) {
+    _faceSprite.gameObject.SetActive (personality);
+    if (personality) {
+      _faceSprite.sprite = face_1;
+    }
   }
 
   public void SetTimedStateChange (MetaballTimedStateChange timedStateChange) {
@@ -242,7 +307,73 @@ public class Metaball : MonoBehaviour {
     }
 
     _timedStateChange = timedStateChange;
-    StartCoroutine (TimedStateChangeAsync ());
+    _timeStateChangeCoroutine = StartCoroutine (TimedStateChangeAsync ());
+  }
+
+  void OnLookAtTargetReleased (Metaball metaball) {
+    if (_faceLookAtTarget == metaball) {
+      ClearLookAtTarget ();
+    }
+  }
+
+  IEnumerator FaceLookAtTargetAsync (bool lookAway = false) {
+    while (_faceLookAtTarget != null) {
+      Vector3 direction = (_faceLookAtTarget.transform.position - _faceSprite.transform.position).normalized;
+      float radius = _magnitude * 0.165f;
+      direction = Vector3.ClampMagnitude (direction, 1f) * radius;
+      if (lookAway) {
+        direction *= -1;
+      }
+      _faceSprite.transform.position = Vector3.MoveTowards (_faceSprite.transform.position, transform.position + direction, Time.deltaTime * 2);
+      // yield return new WaitForSeconds (0.1f);
+      yield return null;
+    }
+
+    _faceLookAtCoroutine = null;
+  }
+
+  void LookAtTarget (Metaball target, bool lookAway) {
+    if (state == MetaballState.Obstacle) return;
+    if (_faceLookAtTarget) {
+      _faceLookAtTarget.onRelease -= OnLookAtTargetReleased;
+    }
+
+    _faceLookAtTarget = target;
+    _faceLookAtTarget.onRelease += OnLookAtTargetReleased;
+
+    if (_faceLookAtCoroutine == null) {
+      _faceLookAtCoroutine = StartCoroutine (FaceLookAtTargetAsync (lookAway));
+    }
+  }
+
+  void ClearLookAtTarget (bool findNew = true) {
+    if (connectedMetaballs.Count > 0 && findNew) {
+      AddLookAtTarget (connectedMetaballs.Values.FirstOrDefault ());
+      return;
+    }
+
+    _faceLookAtTarget = null;
+    _faceSprite.transform.localPosition = Vector3.zero;
+  }
+
+  void AddLookAtTarget (Metaball metaball) {
+    if (!_faceSprite) return;
+    if (!metaball) {
+      Debug.LogError ($"Trying to add null look at target for {name}");
+      ClearLookAtTarget ();
+      return;
+    }
+    bool currentTargetIsGood = _faceLookAtTarget && (!_faceLookAtTarget.HasActiveTimedState () || _faceLookAtTarget._timedStateChange.newState != MetaballState.Obstacle);
+    bool newTargetIsGood = !metaball.HasActiveTimedState () || metaball._timedStateChange.newState != MetaballState.Obstacle;
+    bool keepCurrentTarget = _faceLookAtTarget && !currentTargetIsGood && newTargetIsGood;
+    bool setNewTarget = !_faceLookAtTarget ||
+      (currentTargetIsGood != newTargetIsGood) ||
+      (metaball.value > _faceLookAtTarget.value);
+    if (setNewTarget && !keepCurrentTarget) {
+      LookAtTarget (metaball, !newTargetIsGood);
+      _faceSprite.sprite = newTargetIsGood ? face_1 : face_2;
+      return;
+    }
   }
 
   void HandleConnectedChanged () {
@@ -259,16 +390,18 @@ public class Metaball : MonoBehaviour {
       return;
     }
     if (connectedMetaballs.ContainsKey (metaball.id)) {
-      // TODO: Get here a lot?
-      // Debug.LogError ($"Trying to add already connected metaball. id: {id}");
       return;
     };
+
+    if (!metaball) {
+      Debug.LogError ("Adding null metaball!");
+      return;
+    }
+
     connectedMetaballs.Add (metaball.id, metaball);
-    // if (addToBoth) {
-    //   metaball.AddConnected (this, false);
-    // }
     onConnectedChanged?.Invoke ();
     HandleConnectedChanged ();
+    AddLookAtTarget (metaball);
   }
 
   public void RemoveConnected (Metaball metaball, bool removeFromBoth = true) {
@@ -277,12 +410,18 @@ public class Metaball : MonoBehaviour {
     if (removeFromBoth) {
       metaball.RemoveConnected (this, false);
     }
+
+    if (metaball == _faceLookAtTarget || connectedMetaballs.Count == 0) {
+      ClearLookAtTarget ();
+    }
+
     metaball.ClearHighlight ();
     onConnectedChanged?.Invoke ();
     HandleConnectedChanged ();
   }
 
   public void Highlight (bool highlightConnected = false) {
+    if (this == null || !enabled || !gameObject.activeInHierarchy) return;
     if (isHighlighted) return;
     if (state == MetaballState.Obstacle) return;
     if (_highlightCoroutine != null) StopCoroutine (_highlightCoroutine);
@@ -331,6 +470,7 @@ public class Metaball : MonoBehaviour {
 
       // Scale down this metaball
       transform.localScale = Vector3.MoveTowards (transform.localScale, targetScale, speed * Time.deltaTime);
+      _magnitude = transform.localScale.magnitude;
       yield return null;
     }
 
@@ -344,7 +484,7 @@ public class Metaball : MonoBehaviour {
 
   int AbsorbBy (Metaball absorbingMetaball, float speed) {
     int valueAbsorbed = value;
-    StopAllCoroutines ();
+    StopCoroutines ();
     _canvas.gameObject.SetActive (false);
     StartCoroutine (AbsorbByAsync (absorbingMetaball, speed));
     return valueAbsorbed;
@@ -385,6 +525,7 @@ public class Metaball : MonoBehaviour {
       Debug.Log ($"currentValue: {currentValue}, targetValue: {targetValue}");
       Debug.Log ($"currentScale: {transform.localScale}, targetScale: {targetScale}");
       transform.localScale = Vector3.MoveTowards (transform.localScale, targetScale, speed * Time.deltaTime);
+      _magnitude = transform.localScale.magnitude;
       currentValue = Mathf.MoveTowards (currentValue, targetValue, speed * 5 * Time.deltaTime);
       this.value = Mathf.RoundToInt (currentValue); // Use RoundToInt to avoid casting issues
       yield return null;
@@ -418,7 +559,8 @@ public class Metaball : MonoBehaviour {
     if (!CanAbsorbConnected ()) return;
     float absorbSpeed = 10f;
     if (!this.gameObject.activeInHierarchy) Debug.LogError ($"Trying to absorb inactive metaball {name}");
-    StopAllCoroutines ();
+    StopCoroutines ();
+
     _canvas.gameObject.SetActive (false);
     _absorbCoroutine = StartCoroutine (AbsorbConnectedAsync (new List<Metaball> (connectedMetaballs.Values), absorbSpeed));
   }
@@ -465,10 +607,9 @@ public class Metaball : MonoBehaviour {
       if (state == MetaballState.Obstacle) return;
 
       var otherMetaball = other.gameObject.GetComponent<Metaball> ();
+      if (!otherMetaball || otherMetaball == this) return;
 
-      if (otherMetaball == this) return;
-
-      if (otherMetaball && otherMetaball.state != MetaballState.Obstacle) {
+      if (otherMetaball.state != MetaballState.Obstacle) {
         if (otherMetaball.color.Equals (color)) {
           AddConnected (otherMetaball);
         }
@@ -484,7 +625,9 @@ public class Metaball : MonoBehaviour {
     if (other.gameObject.CompareTag ("Metaball")) {
       if (connectedMetaballs.Count == 0) return;
       var otherMetaball = other.gameObject.GetComponent<Metaball> ();
-      if (otherMetaball && otherMetaball.state != MetaballState.Obstacle) {
+      if (!otherMetaball) return;
+
+      if (otherMetaball.state != MetaballState.Obstacle) {
         if (otherMetaball.color.Equals (color)) {
           RemoveConnected (otherMetaball);
         }
@@ -494,5 +637,9 @@ public class Metaball : MonoBehaviour {
         transform.SetParent (_parentWhenFalling);
       }
     }
+  }
+
+  private void OnDestroy () {
+    ClearListeners();
   }
 }

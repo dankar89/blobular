@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 public class LevelController : MonoBehaviour {
 
-  public static int NEXT_LEVEL_THRESHOLD = 125;
+  public static int NEXT_LEVEL_THRESHOLD = 140;
   public static int MAX_POP_THRESHOLD = 75;
   public static int START_POP_THRESHOLD = 40;
   public static int POP_THRESHOLD_INCREMENT = 5;
@@ -63,6 +63,8 @@ public class LevelController : MonoBehaviour {
     Debug.Log ("Game Over");
     GameManager.GetInstance ().Pause ();
     _levelUI.ShowGameOver ();
+    StopAllCoroutines();
+    OverflowTrigger.OnOverflowChanged -= OnOverflowChanged;
   }
 
   IEnumerator LifeTimer (float fromAngle, float toAngle, float speed, int direction) {
@@ -141,12 +143,11 @@ public class LevelController : MonoBehaviour {
 
   void NextLevel () {
     level++;
-    Debug.Log($"############ Next level {level}");
     if (popThreshold < MAX_POP_THRESHOLD) {
       popThreshold = Mathf.Min (popThreshold + POP_THRESHOLD_INCREMENT, MAX_POP_THRESHOLD);
     }
 
-    MetaballManager.instance.ClearObstacles();
+    MetaballManager.instance.ClearObstacles ();
 
     // Play level up sound
     SoundManager.PlaySfx ("level_up", .5f);
@@ -264,5 +265,9 @@ public class LevelController : MonoBehaviour {
     if (Time.frameCount % 4 == 0) {
       RaycastForMetaball ();
     }
+  }
+
+  void OnDestroy () {
+    Debug.LogError ("LevelController OnDestroy. WHYYY???");
   }
 }

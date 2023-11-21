@@ -18,52 +18,73 @@ MonoBehaviour:
   chanceOf10xValue: 0.015
   minSpawnInterval: 0.5
   spawnDataList:
-  - duration: 20
-    spawnInterval: 3
+  - duration: 30
+    spawnInterval: 2.5
     metaballsPerSpawn: 1
     minSpawnValue: 2
     maxSpawnValue: 2
     timedObstacleChance: 0
     powerUpChance: 0
-  - duration: 20
-    spawnInterval: 3
-    metaballsPerSpawn: 2
-    minSpawnValue: 2
-    maxSpawnValue: 2
-    timedObstacleChance: 0.1
-    powerUpChance: 0
-  - duration: 20
+  - duration: 30
     spawnInterval: 2.5
     metaballsPerSpawn: 2
     minSpawnValue: 2
     maxSpawnValue: 2
     timedObstacleChance: 0.1
     powerUpChance: 0
-  - duration: 20
+  - duration: 30
+    spawnInterval: 2.5
+    metaballsPerSpawn: 2
+    minSpawnValue: 2
+    maxSpawnValue: 2
+    timedObstacleChance: 0.1
+    powerUpChance: 0
+  - duration: 30
     spawnInterval: 2.5
     metaballsPerSpawn: 3
     minSpawnValue: 2
     maxSpawnValue: 2
     timedObstacleChance: 0.1
     powerUpChance: 0
-  - duration: 20
+  - duration: 30
     spawnInterval: 3
     metaballsPerSpawn: 4
     minSpawnValue: 2
     maxSpawnValue: 2
     timedObstacleChance: 0.1
     powerUpChance: 0
-  - duration: 20
+  - duration: 30
     spawnInterval: 2.5
     metaballsPerSpawn: 4
     minSpawnValue: 2
     maxSpawnValue: 4
     timedObstacleChance: 0.15
     powerUpChance: 0
-  - duration: 20
+  - duration: 30
     spawnInterval: 2.5
-    metaballsPerSpawn: 5
+    metaballsPerSpawn: 4
     minSpawnValue: 2
     maxSpawnValue: 4
     timedObstacleChance: 0.15
+    powerUpChance: 0
+  - duration: 30
+    spawnInterval: 2.5
+    metaballsPerSpawn: 4
+    minSpawnValue: 2
+    maxSpawnValue: 8
+    timedObstacleChance: 0.15
+    powerUpChance: 0
+  - duration: 30
+    spawnInterval: 2.5
+    metaballsPerSpawn: 5
+    minSpawnValue: 2
+    maxSpawnValue: 8
+    timedObstacleChance: 0.15
+    powerUpChance: 0
+  - duration: 30
+    spawnInterval: 2.5
+    metaballsPerSpawn: 5
+    minSpawnValue: 2
+    maxSpawnValue: 8
+    timedObstacleChance: 0.16
     powerUpChance: 0
