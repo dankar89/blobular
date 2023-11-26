@@ -247,13 +247,11 @@ public class Metaball : MonoBehaviour {
     MetaballStateChangeAction action = _timedStateChange.action;
 
     _canvas.gameObject.SetActive (true);
-    // _textMesh.enabled = true;
     _textMesh.color = _initialTextColor;
     _textMesh.text = $"{Mathf.RoundToInt (timer)}";
 
     yield return new WaitUntil (() => _hasFirstContact);
 
-    // yield return new WaitForSeconds (timer);
     // Update the text with time left in seconds and count down to 0 before continuing
     float timeFlashMultiplier = 7.5f;
     int flashThreshold = 5;
@@ -325,7 +323,6 @@ public class Metaball : MonoBehaviour {
         direction *= -1;
       }
       _faceSprite.transform.position = Vector3.MoveTowards (_faceSprite.transform.position, transform.position + direction, Time.deltaTime * 2);
-      // yield return new WaitForSeconds (0.1f);
       yield return null;
     }
 
@@ -354,6 +351,7 @@ public class Metaball : MonoBehaviour {
 
     _faceLookAtTarget = null;
     _faceSprite.transform.localPosition = Vector3.zero;
+    _faceSprite.sprite = face_1;
   }
 
   void AddLookAtTarget (Metaball metaball) {
@@ -640,6 +638,6 @@ public class Metaball : MonoBehaviour {
   }
 
   private void OnDestroy () {
-    ClearListeners();
+    ClearListeners ();
   }
 }
